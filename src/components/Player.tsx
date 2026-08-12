@@ -33,23 +33,23 @@ export default function Player() {
   }, [yearMenuOpen]);
 
   const tabClass = (active: boolean) =>
-    `w-full whitespace-nowrap rounded-full px-2 py-1.5 text-center font-mono text-[10px] uppercase tracking-widest transition-colors sm:px-3.5 sm:text-[11px] ${
+    `w-full whitespace-nowrap rounded-full px-2 py-1.5 text-center font-mono text-[10px] uppercase tracking-widest transition-colors sm:w-auto sm:px-3.5 sm:text-[11px] ${
       active ? "bg-ochre text-charcoal" : "text-rice/60 hover:text-rice"
     }`;
 
   return (
     <div className="flex w-full flex-col items-center gap-3 px-4 pb-6 sm:pb-8">
-      <div className="flex w-full max-w-2xl flex-nowrap justify-center gap-1 rounded-full border border-ochre/25 bg-charcoal/70 p-1.5 backdrop-blur-md sm:gap-1.5">
+      <div className="flex w-full max-w-2xl flex-nowrap justify-center gap-1 rounded-full border border-ochre/25 bg-charcoal/70 p-1.5 backdrop-blur-md sm:w-auto sm:max-w-none sm:gap-1.5">
         <button
           type="button"
           onClick={() => setPlaylistId(OLD_SONG.playlistId)}
           aria-pressed={playlistId === OLD_SONG.playlistId}
-          className={`flex-1 ${tabClass(playlistId === OLD_SONG.playlistId)}`}
+          className={`flex-1 sm:flex-none ${tabClass(playlistId === OLD_SONG.playlistId)}`}
         >
           {OLD_SONG.label}
         </button>
 
-        <div ref={menuRef} className="relative flex-1">
+        <div ref={menuRef} className="relative flex-1 sm:flex-none">
           <button
             type="button"
             onClick={() => setYearMenuOpen((open) => !open)}
@@ -87,7 +87,7 @@ export default function Player() {
           type="button"
           onClick={() => setPlaylistId(COVER_SONG.playlistId)}
           aria-pressed={playlistId === COVER_SONG.playlistId}
-          className={`flex-1 ${tabClass(playlistId === COVER_SONG.playlistId)}`}
+          className={`flex-1 sm:flex-none ${tabClass(playlistId === COVER_SONG.playlistId)}`}
         >
           {COVER_SONG.label}
         </button>
@@ -96,7 +96,7 @@ export default function Player() {
           type="button"
           onClick={() => setPlaylistId(INSTRUMENTAL.playlistId)}
           aria-pressed={playlistId === INSTRUMENTAL.playlistId}
-          className={`flex-1 ${tabClass(playlistId === INSTRUMENTAL.playlistId)}`}
+          className={`flex-1 sm:flex-none ${tabClass(playlistId === INSTRUMENTAL.playlistId)}`}
         >
           {INSTRUMENTAL.label}
         </button>
