@@ -90,7 +90,13 @@ function loadYouTubeApi(): Promise<YTNamespace> {
   return apiLoadPromise;
 }
 
-const MAX_SKIP_RETRIES = 5;
+const MAX_SKIP_RETRIES = 15;
+// some playlists (e.g. a large, old, mixed-source one) have long runs of
+// consecutive embedding-restricted videos, so retries jump to a random
+// index within this generous bound rather than walking sequentially —
+// safe even for shorter playlists since YouTube clamps an out-of-range
+// index to the last video.
+const RETRY_INDEX_POOL = 300;
 
 export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -159,11 +165,20 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
             }
           },
           onError: () => {
-            if (cancelled || retryCount >= MAX_SKIP_RETRIES) return;
+            if (cancelled) return;
+            if (retryCount >= MAX_SKIP_RETRIES) {
+              // every retry hit a video the owner blocked from embedding —
+              // stop spinning forever and say so instead
+              setTitle("Playback unavailable for this playlist");
+              setAuthor("");
+              setPlaying(false);
+              return;
+            }
             retryCount += 1;
+            const nextIndex = Math.floor(Math.random() * RETRY_INDEX_POOL);
             if (retryTimer) clearTimeout(retryTimer);
             retryTimer = setTimeout(() => {
-              if (!cancelled) setup(YT, retryCount, 1);
+              if (!cancelled) setup(YT, nextIndex, 1);
             }, 1200);
           },
         },
