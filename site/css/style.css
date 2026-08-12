@@ -151,14 +151,63 @@ img {
 /* ---------- category tabs ---------- */
 
 .player-wrap {
+  position: relative;
+}
+
+/* progressive blur: a single backdrop-filter can't have a gradient blur
+   radius, so this fakes one with several masked layers, each a stronger
+   blur than the last, each fading in over a different band — going from
+   sharp near the hero image to heavily blurred right behind the player */
+.player-blur-layers {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.blur-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.blur-layer-a {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(to top, transparent 62%, black 75%, black 100%);
+  mask-image: linear-gradient(to top, transparent 62%, black 75%, black 100%);
+}
+
+.blur-layer-b {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  -webkit-mask-image: linear-gradient(to top, transparent 37%, black 50%, black 75%, transparent 88%);
+  mask-image: linear-gradient(to top, transparent 37%, black 50%, black 75%, transparent 88%);
+}
+
+.blur-layer-c {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  -webkit-mask-image: linear-gradient(to top, transparent 12%, black 25%, black 50%, transparent 63%);
+  mask-image: linear-gradient(to top, transparent 12%, black 25%, black 50%, transparent 63%);
+}
+
+.blur-layer-d {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 25%, transparent 38%);
+  mask-image: linear-gradient(to top, black 0%, black 25%, transparent 38%);
+  background: linear-gradient(to top, rgba(10, 8, 6, 0.5) 0%, rgba(10, 8, 6, 0) 40%);
+}
+
+.player-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   padding: 20px 16px 24px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  background: linear-gradient(to top, rgba(10, 8, 6, 0.55) 0%, rgba(10, 8, 6, 0.15) 70%, rgba(10, 8, 6, 0) 100%);
 }
 
 .open-playlist {
