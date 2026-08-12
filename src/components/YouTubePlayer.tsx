@@ -12,6 +12,7 @@ interface YTPlayerInstance {
   pauseVideo(): void;
   nextVideo(): void;
   previousVideo(): void;
+  setShuffle(shufflePlaylist: boolean): void;
   seekTo(seconds: number, allowSeekAhead: boolean): void;
   getCurrentTime(): number;
   getDuration(): number;
@@ -34,6 +35,7 @@ interface YTNamespace {
       events: {
         onReady?: (e: YTPlayerEvent) => void;
         onStateChange?: (e: YTPlayerEvent) => void;
+        onError?: (e: YTPlayerEvent) => void;
       };
     }
   ) => YTPlayerInstance;
@@ -88,10 +90,14 @@ function loadYouTubeApi(): Promise<YTNamespace> {
   return apiLoadPromise;
 }
 
+const MAX_SKIP_RETRIES = 5;
+
 export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
 
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -115,6 +121,7 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    retryCountRef.current = 0;
 
     loadYouTubeApi().then((YT) => {
       if (cancelled || !hostRef.current) return;
@@ -125,11 +132,15 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
         playerVars: { listType: "playlist", list: playlistId, autoplay: 0 },
         events: {
           onReady: (e) => {
+            // shuffle so the playlist doesn't always play in the same
+            // serial order — re-rolled fresh on every page load
+            e.target.setShuffle(true);
             setReady(true);
             refreshTrackInfo(e.target);
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
+              retryCountRef.current = 0;
               setPlaying(true);
               refreshTrackInfo(e.target);
             } else if (e.data === YT.PlayerState.PAUSED) {
@@ -137,6 +148,24 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
             } else if (e.data === YT.PlayerState.ENDED) {
               setPlaying(false);
             }
+          },
+          // some playlist videos disallow embedded playback (removed,
+          // private, or embedding disabled by the owner) — skip past them
+          // automatically. Retries stay on the same player instance and are
+          // spaced out with a delay: calling nextVideo() immediately inside
+          // onError, or recreating the player in a tight loop, both proved
+          // to cascade into every subsequent video failing too (almost
+          // certainly YouTube rate-limiting rapid-fire embed churn). A
+          // capped, delayed retry avoids that.
+          onError: (e) => {
+            if (retryCountRef.current >= MAX_SKIP_RETRIES) return;
+            retryCountRef.current += 1;
+            const target = e.target;
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+            retryTimerRef.current = setTimeout(() => {
+              target.nextVideo();
+              target.playVideo();
+            }, 800);
           },
         },
       });
@@ -146,6 +175,7 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
     return () => {
       cancelled = true;
       if (tickRef.current) clearInterval(tickRef.current);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       playerRef.current?.destroy();
       playerRef.current = null;
     };

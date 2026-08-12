@@ -61,7 +61,7 @@ export default function Player() {
           </button>
 
           {yearMenuOpen && (
-            <div className="absolute left-1/2 top-full z-20 mt-2 w-28 -translate-x-1/2 overflow-hidden rounded-2xl border border-ochre/25 bg-charcoal/95 shadow-xl backdrop-blur-md">
+            <div className="absolute bottom-full left-1/2 z-20 mb-2 w-28 -translate-x-1/2 overflow-hidden rounded-2xl border border-ochre/25 bg-charcoal/95 shadow-xl backdrop-blur-md">
               {YEARS.map((year) => (
                 <button
                   key={year.playlistId}
