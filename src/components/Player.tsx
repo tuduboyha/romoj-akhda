@@ -39,7 +39,7 @@ export default function Player() {
 
   return (
     <div className="flex flex-col items-center gap-3 px-4 pb-6 sm:pb-8">
-      <div className="flex flex-nowrap justify-center gap-1 overflow-x-auto rounded-full border border-ochre/25 bg-charcoal/70 p-1.5 backdrop-blur-md sm:gap-1.5">
+      <div className="flex flex-nowrap justify-center gap-1 rounded-full border border-ochre/25 bg-charcoal/70 p-1.5 backdrop-blur-md sm:gap-1.5">
         <button
           type="button"
           onClick={() => setPlaylistId(OLD_SONG.playlistId)}
