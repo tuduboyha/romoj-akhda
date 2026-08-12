@@ -6,7 +6,7 @@ export default function VillageScene() {
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden bg-charcoal">
       <Image
-        src={`${BASE_PATH}/images/village-fire.png`}
+        src={`${BASE_PATH}/images/santal-dance.png`}
         alt=""
         fill
         priority
