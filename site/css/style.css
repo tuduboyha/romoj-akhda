@@ -171,6 +171,69 @@ img {
   color: var(--ochre);
 }
 
+.tracklist-panel {
+  width: 100%;
+  max-width: 42rem;
+  max-height: 190px;
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(235, 169, 52, 0.25);
+  background: rgba(36, 26, 20, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.tracklist-status {
+  margin: 0;
+  padding: 8px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 246, 230, 0.4);
+}
+
+.tracklist-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.track-item:hover {
+  background: rgba(235, 169, 52, 0.12);
+}
+
+.track-item.active {
+  background: rgba(235, 169, 52, 0.2);
+}
+
+.track-item img {
+  height: 30px;
+  width: 48px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  object-fit: cover;
+  background: rgba(255, 246, 230, 0.1);
+}
+
+.track-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Mukta", sans-serif;
+  font-size: 13px;
+  color: var(--rice);
+}
+
 .tabs {
   display: flex;
   flex-wrap: nowrap;

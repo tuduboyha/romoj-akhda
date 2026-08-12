@@ -51,7 +51,6 @@ const YEAR_PLAYLIST_IDS = new Set(
 const tabsRow = document.getElementById("tabs");
 const yearBtn = document.getElementById("yearBtn");
 const yearPanel = document.getElementById("yearPanel");
-const openPlaylistLink = document.getElementById("openPlaylistLink");
 
 let currentPlaylistId = "PLffCnobOvXsU"; // Old Song, the default tab
 
@@ -64,13 +63,13 @@ function setActiveTabStyles() {
   document.querySelectorAll(".year-option").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.playlist === currentPlaylistId);
   });
-  openPlaylistLink.href = `https://www.youtube.com/playlist?list=${currentPlaylistId}`;
 }
 
 function selectPlaylist(playlistId) {
   if (playlistId === currentPlaylistId) return;
   currentPlaylistId = playlistId;
   setActiveTabStyles();
+  closeTracklist();
   startPlayer(playlistId);
 }
 
@@ -196,12 +195,16 @@ function setThumbnail(videoId) {
   thumbEl.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
 }
 
+let currentVideoId = null;
+
 function refreshTrackInfo(player) {
   const data = player.getVideoData();
   titleEl.textContent = data.title || "Untitled";
   authorEl.textContent = data.author || "";
   duration = player.getDuration();
   setThumbnail(data.video_id);
+  currentVideoId = data.video_id || null;
+  highlightActiveTrack();
 }
 
 function setReady(value) {
@@ -277,6 +280,15 @@ function startPlayer(playlistId) {
             retryCount = 0;
             setPlaying(true);
             refreshTrackInfo(e.target);
+            // getVideoData().title can briefly lag behind video_id right
+            // after a programmatic jump (e.g. clicking a tracklist item),
+            // so re-check once the metadata has had a moment to settle
+            const jumpedVideoId = e.target.getVideoData().video_id;
+            setTimeout(() => {
+              if (token === setupToken && e.target.getVideoData().video_id === jumpedVideoId) {
+                refreshTrackInfo(e.target);
+              }
+            }, 500);
           } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
             setPlaying(false);
           }
@@ -307,6 +319,55 @@ function startPlayer(playlistId) {
   });
 }
 
+// YouTube's playlist `index` playerVar isn't reliably addressable — it
+// doesn't consistently map to the same position `getPlaylist()` reports,
+// so it's only good enough for "land on *some* playable video" (the
+// error-retry path above). Jumping to one specific track chosen from the
+// tracklist instead loads that exact video ID directly, which is
+// unambiguous. Playlist-relative next/prev is lost for that one track,
+// which is an acceptable trade-off for picking an exact song.
+function playTrack(videoId, knownTitle) {
+  const token = ++setupToken;
+  setReady(false);
+  setPlaying(false);
+  elapsed = 0;
+  duration = 0;
+  renderProgress();
+  titleEl.textContent = knownTitle || "Loading…";
+  authorEl.textContent = "";
+  setThumbnail(videoId);
+
+  loadYouTubeApi().then((YT) => {
+    if (token !== setupToken) return;
+    if (ytPlayer) ytPlayer.destroy();
+
+    ytPlayer = new YT.Player(hostEl, {
+      height: "1",
+      width: "1",
+      videoId,
+      playerVars: { autoplay: 1 },
+      events: {
+        onReady: (e) => {
+          if (token !== setupToken) return;
+          setReady(true);
+          refreshTrackInfo(e.target);
+          // getVideoData().title is unreliable right at onReady — the
+          // title we already fetched for the tracklist is trustworthy
+          if (knownTitle) titleEl.textContent = knownTitle;
+        },
+        onStateChange: (e) => {
+          if (token !== setupToken) return;
+          if (e.data === YT.PlayerState.PLAYING) {
+            setPlaying(true);
+          } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+            setPlaying(false);
+          }
+        },
+      },
+    });
+  });
+}
+
 playBtn.addEventListener("click", () => {
   if (!ytPlayer) return;
   if (playing) ytPlayer.pauseVideo();
@@ -323,6 +384,114 @@ seekEl.addEventListener("click", (e) => {
   ytPlayer.seekTo(target, true);
   elapsed = target;
   renderProgress();
+});
+
+/* ---------- in-page tracklist (no redirect to youtube.com) ---------- */
+
+const tracklistToggle = document.getElementById("tracklistToggle");
+const tracklistPanel = document.getElementById("tracklistPanel");
+const tracklistStatusEl = document.getElementById("tracklistStatus");
+const tracklistItemsEl = document.getElementById("tracklistItems");
+
+const TITLE_FETCH_CONCURRENCY = 6;
+const tracklistCache = {}; // playlistId -> { items: [{videoId, title}], loaded }
+let tracklistOpen = false;
+
+function closeTracklist() {
+  tracklistOpen = false;
+  tracklistPanel.hidden = true;
+  tracklistToggle.setAttribute("aria-expanded", "false");
+}
+
+function highlightActiveTrack() {
+  tracklistItemsEl.querySelectorAll(".track-item").forEach((item) => {
+    item.classList.toggle("active", item.dataset.videoId === currentVideoId);
+  });
+}
+
+function renderTracklist(items) {
+  tracklistItemsEl.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "track-item";
+    li.dataset.videoId = item.videoId;
+    if (item.videoId === currentVideoId) li.classList.add("active");
+    li.innerHTML = `<img src="https://i.ytimg.com/vi/${item.videoId}/default.jpg" alt="" loading="lazy" /><span>${item.title || "Loading…"}</span>`;
+    li.addEventListener("click", () => {
+      currentVideoId = item.videoId;
+      highlightActiveTrack();
+      playTrack(item.videoId, item.title);
+    });
+    frag.appendChild(li);
+  });
+  tracklistItemsEl.appendChild(frag);
+}
+
+function updateTrackTitle(items, index, title) {
+  items[index].title = title;
+  const span = tracklistItemsEl.children[index]?.querySelector("span");
+  if (span) span.textContent = title;
+}
+
+async function fetchTitles(playlistId, items) {
+  let cursor = 0;
+  async function worker() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      const videoId = items[index].videoId;
+      let title = "Untitled";
+      try {
+        const res = await fetch(
+          `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}&format=json`
+        );
+        if (res.ok) title = (await res.json()).title || title;
+      } catch {
+        // keep the "Untitled" fallback — a network hiccup on one track
+        // shouldn't stop the rest of the list from filling in
+      }
+      // the playlist tab may have changed while this was in flight
+      if (currentPlaylistId !== playlistId) return;
+      updateTrackTitle(items, index, title);
+    }
+  }
+  await Promise.all(Array.from({ length: TITLE_FETCH_CONCURRENCY }, worker));
+  if (tracklistCache[playlistId]) tracklistCache[playlistId].loaded = true;
+}
+
+function loadTracklist(playlistId) {
+  const cached = tracklistCache[playlistId];
+  if (cached) {
+    renderTracklist(cached.items);
+    tracklistStatusEl.textContent = `${cached.items.length} tracks`;
+    return;
+  }
+
+  if (!ytPlayer || !ready) {
+    tracklistStatusEl.textContent = "Playlist is still loading — try again in a moment.";
+    tracklistItemsEl.innerHTML = "";
+    return;
+  }
+
+  const videoIds = ytPlayer.getPlaylist();
+  if (!videoIds || !videoIds.length) {
+    tracklistStatusEl.textContent = "Couldn't load this playlist's tracklist.";
+    tracklistItemsEl.innerHTML = "";
+    return;
+  }
+
+  const items = videoIds.map((videoId) => ({ videoId, title: null }));
+  tracklistCache[playlistId] = { items, loaded: false };
+  tracklistStatusEl.textContent = `${items.length} tracks`;
+  renderTracklist(items);
+  fetchTitles(playlistId, items);
+}
+
+tracklistToggle.addEventListener("click", () => {
+  tracklistOpen = !tracklistOpen;
+  tracklistPanel.hidden = !tracklistOpen;
+  tracklistToggle.setAttribute("aria-expanded", String(tracklistOpen));
+  if (tracklistOpen) loadTracklist(currentPlaylistId);
 });
 
 startPlayer(currentPlaylistId);
