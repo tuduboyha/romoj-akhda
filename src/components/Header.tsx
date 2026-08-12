@@ -23,11 +23,7 @@ export default function Header() {
   return (
     <header className="flex items-center px-4 py-3 sm:px-8 sm:py-6">
       <div className="flex items-center gap-2 whitespace-nowrap font-mono text-[10px] tracking-widest text-rice/70 sm:gap-3 sm:text-sm">
-        <span suppressHydrationWarning>{time ?? " "}</span>
-        <span className="flex items-center gap-1.5 rounded-full border border-ochre/40 px-2 py-1 text-ochre">
-          <span className="h-1.5 w-1.5 rounded-full bg-ochre animate-twinkle" />
-          ON AIR
-        </span>
+        <span suppressHydrationWarning>{time ?? " "}</span>
       </div>
     </header>
   );
