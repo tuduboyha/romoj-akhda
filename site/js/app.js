@@ -149,14 +149,14 @@ let setupToken = 0; // bumped on every tab switch to invalidate in-flight retrie
 function setThumbnail(videoId) {
   if (!videoId) {
     thumbEl.hidden = true;
-    thumbFallbackEl.hidden = false;
+    thumbFallbackEl.style.display = "";
     return;
   }
   thumbEl.hidden = false;
-  thumbFallbackEl.hidden = true;
+  thumbFallbackEl.style.display = "none";
   thumbEl.onerror = () => {
     thumbEl.hidden = true;
-    thumbFallbackEl.hidden = false;
+    thumbFallbackEl.style.display = "";
   };
   thumbEl.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
 }
@@ -178,8 +178,10 @@ function setReady(value) {
 
 function setPlaying(value) {
   playing = value;
-  playIcon.hidden = value;
-  pauseIcon.hidden = !value;
+  // `.hidden` isn't reliably attribute-reflected on <svg> elements in
+  // every browser, so visibility is toggled directly instead
+  playIcon.style.display = value ? "none" : "block";
+  pauseIcon.style.display = value ? "block" : "none";
   playBtn.setAttribute("aria-label", value ? "Pause" : "Play");
   if (value) {
     if (tickTimer) clearInterval(tickTimer);
