@@ -426,6 +426,14 @@ img {
   opacity: 0.4;
 }
 
+#shuffleBtn[aria-pressed="true"] {
+  color: var(--ochre);
+}
+
+#shuffleBtn[aria-pressed="true"]:hover:not(:disabled) {
+  color: var(--ochre);
+}
+
 .icon {
   height: 20px;
   width: 20px;

@@ -163,6 +163,7 @@ const thumbEl = document.getElementById("thumb");
 const thumbFallbackEl = document.getElementById("thumbFallback");
 const titleEl = document.getElementById("title");
 const authorEl = document.getElementById("author");
+const shuffleBtn = document.getElementById("shuffleBtn");
 const prevBtn = document.getElementById("prevBtn");
 const playBtn = document.getElementById("playBtn");
 const nextBtn = document.getElementById("nextBtn");
@@ -178,6 +179,15 @@ let playing = false;
 let duration = 0;
 let elapsed = 0;
 let tickTimer = null;
+// on by default (playlists re-roll their order on every page load) but
+// the user can turn it off; the preference carries across tab switches
+let shuffleEnabled = true;
+
+shuffleBtn.addEventListener("click", () => {
+  shuffleEnabled = !shuffleEnabled;
+  shuffleBtn.setAttribute("aria-pressed", String(shuffleEnabled));
+  if (ytPlayer && ytPlayer.setShuffle) ytPlayer.setShuffle(shuffleEnabled);
+});
 let setupToken = 0; // bumped on every tab switch to invalidate in-flight retries from the previous playlist
 
 function setThumbnail(videoId) {
@@ -212,6 +222,7 @@ function setReady(value) {
   prevBtn.disabled = !value;
   playBtn.disabled = !value;
   nextBtn.disabled = !value;
+  shuffleBtn.disabled = !value;
 }
 
 function setPlaying(value) {
@@ -268,9 +279,7 @@ function startPlayer(playlistId) {
       events: {
         onReady: (e) => {
           if (token !== setupToken) return;
-          // shuffle so the playlist doesn't always play in the same serial
-          // order — re-rolled fresh on every page load
-          e.target.setShuffle(true);
+          e.target.setShuffle(shuffleEnabled);
           setReady(true);
           refreshTrackInfo(e.target);
         },
