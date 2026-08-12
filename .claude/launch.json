@@ -2,12 +2,6 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "santal-radio-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
-    },
-    {
       "name": "romoj-akhra-static",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", "site", "-p", "5500", "-c-1"],
