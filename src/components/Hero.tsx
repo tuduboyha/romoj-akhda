@@ -1,12 +1,18 @@
+import Image from "next/image";
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function Hero() {
   return (
     <div className="flex flex-col items-center px-6 pt-10 text-center sm:pt-14">
-      <h1
-        className="font-[family-name:var(--font-display)] text-5xl font-extrabold tracking-tight text-rice sm:text-6xl md:text-7xl"
-        style={{ textShadow: "0 3px 0 rgba(0,0,0,0.35), 0 10px 24px rgba(0,0,0,0.5)" }}
-      >
-        SANTAL RADIO
-      </h1>
+      <Image
+        src={`${BASE_PATH}/images/romoj-akhra.png`}
+        alt="Romoj Akhra"
+        width={2381}
+        height={1127}
+        priority
+        className="h-auto w-64 drop-shadow-[0_10px_24px_rgba(0,0,0,0.5)] sm:w-80 md:w-96"
+      />
     </div>
   );
 }
