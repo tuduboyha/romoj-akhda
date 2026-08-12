@@ -96,8 +96,6 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryCountRef = useRef(0);
 
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -121,17 +119,27 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    retryCountRef.current = 0;
+    let retryCount = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    loadYouTubeApi().then((YT) => {
+    // some playlist videos disallow embedded playback (removed, private,
+    // or embedding disabled by the owner). Recovering from that needs a
+    // fresh player instance — retrying nextVideo()/playVideo() on the
+    // player that just errored turned out not to reliably resume. But
+    // recreating instantly, back-to-back, cascaded into every subsequent
+    // video failing too (almost certainly YouTube rate-limiting rapid
+    // embed churn) — so retries are capped and spaced out.
+    function setup(YT: YTNamespace, index: number, autoplay: 0 | 1) {
       if (cancelled || !hostRef.current) return;
+      playerRef.current?.destroy();
 
       const player = new YT.Player(hostRef.current, {
         height: "1",
         width: "1",
-        playerVars: { listType: "playlist", list: playlistId, autoplay: 0 },
+        playerVars: { listType: "playlist", list: playlistId, index, autoplay },
         events: {
           onReady: (e) => {
+            if (cancelled) return;
             // shuffle so the playlist doesn't always play in the same
             // serial order — re-rolled fresh on every page load
             e.target.setShuffle(true);
@@ -139,8 +147,9 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
             refreshTrackInfo(e.target);
           },
           onStateChange: (e) => {
+            if (cancelled) return;
             if (e.data === YT.PlayerState.PLAYING) {
-              retryCountRef.current = 0;
+              retryCount = 0;
               setPlaying(true);
               refreshTrackInfo(e.target);
             } else if (e.data === YT.PlayerState.PAUSED) {
@@ -149,33 +158,27 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
               setPlaying(false);
             }
           },
-          // some playlist videos disallow embedded playback (removed,
-          // private, or embedding disabled by the owner) — skip past them
-          // automatically. Retries stay on the same player instance and are
-          // spaced out with a delay: calling nextVideo() immediately inside
-          // onError, or recreating the player in a tight loop, both proved
-          // to cascade into every subsequent video failing too (almost
-          // certainly YouTube rate-limiting rapid-fire embed churn). A
-          // capped, delayed retry avoids that.
-          onError: (e) => {
-            if (retryCountRef.current >= MAX_SKIP_RETRIES) return;
-            retryCountRef.current += 1;
-            const target = e.target;
-            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-            retryTimerRef.current = setTimeout(() => {
-              target.nextVideo();
-              target.playVideo();
-            }, 800);
+          onError: () => {
+            if (cancelled || retryCount >= MAX_SKIP_RETRIES) return;
+            retryCount += 1;
+            if (retryTimer) clearTimeout(retryTimer);
+            retryTimer = setTimeout(() => {
+              if (!cancelled) setup(YT, retryCount, 1);
+            }, 1200);
           },
         },
       });
       playerRef.current = player;
+    }
+
+    loadYouTubeApi().then((YT) => {
+      if (!cancelled) setup(YT, 0, 0);
     });
 
     return () => {
       cancelled = true;
       if (tickRef.current) clearInterval(tickRef.current);
-      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (retryTimer) clearTimeout(retryTimer);
       playerRef.current?.destroy();
       playerRef.current = null;
     };
