@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --charcoal: #241a14;
+  --rice: #fff6e6;
+  --ochre: #eba934;
+}
+
+@theme inline {
+  --color-charcoal: var(--charcoal);
+  --color-rice: var(--rice);
+  --color-ochre: var(--ochre);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-ol-chiki: var(--font-ol-chiki);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--charcoal);
+  color: var(--rice);
+  font-family: var(--font-body), sans-serif;
+}
+
+::selection {
+  background: var(--ochre);
+  color: var(--charcoal);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ochre);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-twinkle {
+    animation: none !important;
+  }
+}
