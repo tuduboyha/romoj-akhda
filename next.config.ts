@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
-// GitHub Pages serves this site from https://<user>.github.io/santal-radio/,
+// GitHub Pages serves this site from https://<user>.github.io/romoj-akhda/,
 // so the build needs to know to prefix all routes/assets with that subpath.
 // Only applied inside GitHub Actions — local `next dev` is unaffected.
-const REPO_NAME = "santal-radio";
+const REPO_NAME = "romoj-akhda";
 const isGithubActions = process.env.GITHUB_ACTIONS === "true";
 
 const nextConfig: NextConfig = {
