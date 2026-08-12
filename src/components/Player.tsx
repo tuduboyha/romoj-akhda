@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import YouTubePlayer from "@/components/YouTubePlayer";
 
-const OLD_SONG = { label: "Old Song", playlistId: "PLhXvuO8eMB222gHBObv2wZoyxGs3Ubu2O" };
+const OLD_SONG = { label: "Old Song", playlistId: "PLffCnobOvXsU" };
 const COVER_SONG = { label: "Cover Song", playlistId: "PLaeR-8k9b6oo" };
 const INSTRUMENTAL = { label: "Instrumental", playlistId: "PLcQTTKWwcHx0" };
 
