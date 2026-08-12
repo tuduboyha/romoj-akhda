@@ -223,7 +223,7 @@ export default function YouTubePlayer({ playlistId }: { playlistId: string }) {
   const progressPct = duration ? (elapsed / duration) * 100 : 0;
 
   return (
-    <div className="w-full max-w-2xl rounded-[2.25rem] border-2 border-rice/40 bg-charcoal/75 px-5 py-4 shadow-2xl shadow-black/60 backdrop-blur-md sm:px-7 sm:py-5">
+    <div className="w-full max-w-2xl rounded-[1.5rem] border-2 border-rice/40 bg-charcoal/75 px-5 py-4 shadow-2xl shadow-black/60 backdrop-blur-md sm:px-7 sm:py-5">
       {/* the actual YouTube video lives here, shrunk to invisible — audio keeps playing */}
       <div className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0">
         <div ref={hostRef} />
