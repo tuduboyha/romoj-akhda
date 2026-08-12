@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import YouTubePlayer from "@/components/YouTubePlayer";
 
 const OLD_SONG = { label: "Old Song", playlistId: "PLffCnobOvXsU" };
@@ -20,13 +21,19 @@ export default function Player() {
   const [yearMenuPos, setYearMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const yearButtonRef = useRef<HTMLButtonElement>(null);
+  const yearPanelRef = useRef<HTMLDivElement>(null);
 
   const isYearActive = YEAR_PLAYLIST_IDS.has(playlistId);
 
   useEffect(() => {
     if (!yearMenuOpen) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        !yearPanelRef.current?.contains(target)
+      ) {
         setYearMenuOpen(false);
       }
     };
@@ -78,30 +85,34 @@ export default function Player() {
             By Year ▾
           </button>
 
-          {yearMenuOpen && yearMenuPos && (
-            <div
-              style={{ position: "fixed", top: yearMenuPos.top, left: yearMenuPos.left, transform: "translate(-50%, -100%)" }}
-              className="z-20 w-28 overflow-hidden rounded-2xl border border-ochre/25 bg-charcoal/95 shadow-xl backdrop-blur-md"
-            >
-              {YEARS.map((year) => (
-                <button
-                  key={year.playlistId}
-                  type="button"
-                  onClick={() => {
-                    setPlaylistId(year.playlistId);
-                    setYearMenuOpen(false);
-                  }}
-                  className={`block w-full px-4 py-2 text-center font-mono text-[11px] uppercase tracking-widest transition-colors ${
-                    playlistId === year.playlistId
-                      ? "bg-ochre text-charcoal"
-                      : "text-rice/70 hover:bg-ochre/15 hover:text-rice"
-                  }`}
-                >
-                  {year.label}
-                </button>
-              ))}
-            </div>
-          )}
+          {yearMenuOpen &&
+            yearMenuPos &&
+            createPortal(
+              <div
+                ref={yearPanelRef}
+                style={{ position: "fixed", top: yearMenuPos.top, left: yearMenuPos.left, transform: "translate(-50%, -100%)" }}
+                className="z-20 w-28 overflow-hidden rounded-2xl border border-ochre/25 bg-charcoal/95 shadow-xl backdrop-blur-md"
+              >
+                {YEARS.map((year) => (
+                  <button
+                    key={year.playlistId}
+                    type="button"
+                    onClick={() => {
+                      setPlaylistId(year.playlistId);
+                      setYearMenuOpen(false);
+                    }}
+                    className={`block w-full px-4 py-2 text-center font-mono text-[11px] uppercase tracking-widest transition-colors ${
+                      playlistId === year.playlistId
+                        ? "bg-ochre text-charcoal"
+                        : "text-rice/70 hover:bg-ochre/15 hover:text-rice"
+                    }`}
+                  >
+                    {year.label}
+                  </button>
+                ))}
+              </div>,
+              document.body
+            )}
         </div>
 
         <button
