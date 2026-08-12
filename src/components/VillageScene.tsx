@@ -1,10 +1,12 @@
 import Image from "next/image";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function VillageScene() {
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden bg-charcoal">
       <Image
-        src="/images/village-fire.png"
+        src={`${BASE_PATH}/images/village-fire.png`}
         alt=""
         fill
         priority

@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
   },
   basePath: isGithubActions ? `/${REPO_NAME}` : "",
   assetPrefix: isGithubActions ? `/${REPO_NAME}/` : "",
+  env: {
+    // next/image with unoptimized:true doesn't auto-prefix basePath onto raw
+    // src values, so components read this to build correct image URLs themselves.
+    NEXT_PUBLIC_BASE_PATH: isGithubActions ? `/${REPO_NAME}` : "",
+  },
 };
 
 export default nextConfig;
