@@ -51,6 +51,7 @@ const YEAR_PLAYLIST_IDS = new Set(
 const tabsRow = document.getElementById("tabs");
 const yearBtn = document.getElementById("yearBtn");
 const yearPanel = document.getElementById("yearPanel");
+const openPlaylistLink = document.getElementById("openPlaylistLink");
 
 let currentPlaylistId = "PLffCnobOvXsU"; // Old Song, the default tab
 
@@ -63,6 +64,7 @@ function setActiveTabStyles() {
   document.querySelectorAll(".year-option").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.playlist === currentPlaylistId);
   });
+  openPlaylistLink.href = `https://www.youtube.com/playlist?list=${currentPlaylistId}`;
 }
 
 function selectPlaylist(playlistId) {
