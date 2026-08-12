@@ -114,6 +114,7 @@ img {
   border: 1px solid rgba(235, 169, 52, 0.35);
   background: rgba(36, 26, 20, 0.7);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 6px 14px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
@@ -154,7 +155,10 @@ img {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 0 16px 24px;
+  padding: 20px 16px 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(to top, rgba(10, 8, 6, 0.55) 0%, rgba(10, 8, 6, 0.15) 70%, rgba(10, 8, 6, 0) 100%);
 }
 
 .open-playlist {
@@ -180,6 +184,7 @@ img {
   border: 1px solid rgba(235, 169, 52, 0.25);
   background: rgba(36, 26, 20, 0.85);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .tracklist-status {
@@ -250,6 +255,7 @@ img {
   background: rgba(36, 26, 20, 0.7);
   padding: 6px;
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .tabs::-webkit-scrollbar {
@@ -293,6 +299,7 @@ img {
   background: rgba(36, 26, 20, 0.95);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .year-option {
@@ -330,6 +337,7 @@ img {
   padding: 16px 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .yt-host-wrap {
