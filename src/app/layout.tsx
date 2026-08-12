@@ -27,9 +27,9 @@ const olChiki = Noto_Sans_Ol_Chiki({
 });
 
 export const metadata: Metadata = {
-  title: "Santal Radio",
+  title: "Romoj Akhra",
   description:
-    "Santal Radio — folk sessions and tribal beats from the Santal heartland, always playing.",
+    "Romoj Akhra — folk sessions and tribal beats from the Santal heartland, always playing.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
