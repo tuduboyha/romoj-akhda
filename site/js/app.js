@@ -9,6 +9,39 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 15000);
 
+/* ---------- PWA install ---------- */
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {});
+  });
+}
+
+const installBtn = document.getElementById("installBtn");
+let deferredInstallPrompt = null;
+
+// only Chromium browsers fire this; the button stays hidden everywhere
+// else (Safari/iOS has no install-prompt API — users add to Home Screen
+// via the share sheet instead)
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installBtn.hidden = false;
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+  installBtn.hidden = true;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+});
+
+window.addEventListener("appinstalled", () => {
+  installBtn.hidden = true;
+  deferredInstallPrompt = null;
+});
+
 /* ---------- category tabs + By Year dropdown ---------- */
 
 const YEAR_PLAYLIST_IDS = new Set(

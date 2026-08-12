@@ -95,6 +95,8 @@ img {
 .header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 16px;
 }
 
@@ -104,6 +106,27 @@ img {
   letter-spacing: 0.15em;
   color: rgba(255, 246, 230, 0.7);
   white-space: nowrap;
+}
+
+.install-btn {
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 1px solid rgba(235, 169, 52, 0.35);
+  background: rgba(36, 26, 20, 0.7);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--rice);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.install-btn:hover {
+  background: var(--ochre);
+  border-color: var(--ochre);
+  color: var(--charcoal);
 }
 
 .hero {
@@ -388,6 +411,11 @@ img {
   .clock {
     font-size: 14px;
     letter-spacing: 0.1em;
+  }
+
+  .install-btn {
+    padding: 8px 16px;
+    font-size: 11px;
   }
 
   .hero {
