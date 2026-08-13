@@ -168,16 +168,20 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 9999px;
-  color: rgba(255, 246, 230, 0.6);
+  border: 1px solid rgba(235, 169, 52, 0.25);
+  background: rgba(36, 26, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 246, 230, 0.7);
   transition: color 0.15s, background-color 0.15s;
 }
 
 .tracklist-icon-btn:hover:not(:disabled) {
   color: var(--ochre);
-  background: rgba(235, 169, 52, 0.12);
+  background: rgba(235, 169, 52, 0.18);
 }
 
 .tracklist-icon-btn:disabled {
