@@ -314,6 +314,19 @@ img {
   background: rgba(255, 246, 230, 0.1);
 }
 
+.track-item-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  width: 48px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: rgba(255, 246, 230, 0.1);
+  color: rgba(255, 246, 230, 0.5);
+  font-size: 16px;
+}
+
 .track-item span {
   overflow: hidden;
   text-overflow: ellipsis;

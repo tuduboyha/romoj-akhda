@@ -52,6 +52,8 @@ const tabsRow = document.getElementById("tabs");
 const yearBtn = document.getElementById("yearBtn");
 const yearPanel = document.getElementById("yearPanel");
 
+const UPLOADS_PLAYLIST_ID = "uploads";
+
 let currentPlaylistId = "PLffCnobOvXsU"; // Old Song, the default tab
 
 function setActiveTabStyles() {
@@ -75,7 +77,8 @@ function selectPlaylist(playlistId) {
   currentPlaylistId = playlistId;
   setActiveTabStyles();
   closeTracklist();
-  startPlayer(playlistId);
+  if (playlistId === UPLOADS_PLAYLIST_ID) startUploadsPlayer();
+  else startPlayer(playlistId);
 }
 
 document.querySelectorAll(".tab[data-playlist]").forEach((btn) => {
@@ -187,13 +190,18 @@ let tickTimer = null;
 // on by default (playlists re-roll their order on every page load) but
 // the user can turn it off; the preference carries across tab switches
 let shuffleEnabled = true;
+// "youtube" (ytPlayer, the IFrame API) or "native" (audioEl, uploaded
+// files) — the shared transport controls below dispatch to whichever is
+// currently active
+let mode = "youtube";
+let setupToken = 0; // bumped on every tab switch to invalidate in-flight retries/loads from the previous playlist
 
 shuffleBtn.addEventListener("click", () => {
   shuffleEnabled = !shuffleEnabled;
   shuffleBtn.setAttribute("aria-pressed", String(shuffleEnabled));
-  if (ytPlayer && ytPlayer.setShuffle) ytPlayer.setShuffle(shuffleEnabled);
+  if (mode === "youtube" && ytPlayer && ytPlayer.setShuffle) ytPlayer.setShuffle(shuffleEnabled);
+  if (mode === "native") reshuffleUploads();
 });
-let setupToken = 0; // bumped on every tab switch to invalidate in-flight retries from the previous playlist
 
 function setThumbnail(videoId) {
   // the base `img { display: block }` rule beats the `hidden` attribute's
@@ -240,7 +248,7 @@ function setPlaying(value) {
   playIcon.style.display = value ? "none" : "block";
   pauseIcon.style.display = value ? "block" : "none";
   playBtn.setAttribute("aria-label", value ? "Pause" : "Play");
-  if (value) {
+  if (value && mode === "youtube") {
     if (tickTimer) clearInterval(tickTimer);
     tickTimer = setInterval(() => {
       if (ytPlayer) {
@@ -264,6 +272,8 @@ function renderProgress() {
 
 function startPlayer(playlistId) {
   const token = ++setupToken;
+  mode = "youtube";
+  audioEl.pause();
   setReady(false);
   setPlaying(false);
   elapsed = 0;
@@ -345,6 +355,8 @@ function startPlayer(playlistId) {
 // which is an acceptable trade-off for picking an exact song.
 function playTrack(videoId, knownTitle) {
   const token = ++setupToken;
+  mode = "youtube";
+  audioEl.pause();
   setReady(false);
   setPlaying(false);
   elapsed = 0;
@@ -386,21 +398,141 @@ function playTrack(videoId, knownTitle) {
 }
 
 playBtn.addEventListener("click", () => {
+  if (mode === "native") {
+    if (playing) audioEl.pause();
+    else audioEl.play();
+    return;
+  }
   if (!ytPlayer) return;
   if (playing) ytPlayer.pauseVideo();
   else ytPlayer.playVideo();
 });
-nextBtn.addEventListener("click", () => ytPlayer && ytPlayer.nextVideo());
-prevBtn.addEventListener("click", () => ytPlayer && ytPlayer.previousVideo());
+nextBtn.addEventListener("click", () => {
+  if (mode === "native") uploadsAdvance(1);
+  else if (ytPlayer) ytPlayer.nextVideo();
+});
+prevBtn.addEventListener("click", () => {
+  if (mode === "native") uploadsAdvance(-1);
+  else if (ytPlayer) ytPlayer.previousVideo();
+});
 
 seekEl.addEventListener("click", (e) => {
-  if (!ytPlayer || !duration) return;
+  if (!duration) return;
   const rect = seekEl.getBoundingClientRect();
   const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
   const target = ratio * duration;
-  ytPlayer.seekTo(target, true);
+  if (mode === "native") {
+    audioEl.currentTime = target;
+  } else {
+    if (!ytPlayer) return;
+    ytPlayer.seekTo(target, true);
+  }
   elapsed = target;
   renderProgress();
+});
+
+/* ---------- uploaded tracks (native <audio>, served from R2) ---------- */
+
+const audioEl = new Audio();
+audioEl.preload = "metadata";
+
+let uploadedTracks = [];
+let uploadedOrder = [];
+let uploadedPos = 0;
+let uploadsLoaded = false; // distinguishes "still fetching" from "fetched, none found" in the tracklist popup
+
+function shuffleArray(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function reshuffleUploads() {
+  if (!uploadedTracks.length) return;
+  const currentIdx = uploadedOrder[uploadedPos];
+  const rest = uploadedTracks.map((_, i) => i).filter((i) => i !== currentIdx);
+  uploadedOrder = [currentIdx, ...(shuffleEnabled ? shuffleArray(rest) : rest.sort((a, b) => a - b))];
+  uploadedPos = 0;
+}
+
+function loadUploadedTrack(token, autoplay) {
+  if (token !== setupToken) return;
+  const track = uploadedTracks[uploadedOrder[uploadedPos]];
+  if (!track) return;
+  currentVideoId = track.key;
+  titleEl.textContent = track.name;
+  authorEl.textContent = "Uploaded";
+  setThumbnail(null);
+  highlightActiveTrack();
+  audioEl.src = track.url;
+  setReady(true);
+  if (autoplay) audioEl.play().catch(() => {});
+}
+
+function uploadsAdvance(delta) {
+  if (!uploadedOrder.length) return;
+  uploadedPos = (uploadedPos + delta + uploadedOrder.length) % uploadedOrder.length;
+  loadUploadedTrack(setupToken, true);
+}
+
+async function startUploadsPlayer() {
+  const token = ++setupToken;
+  mode = "native";
+  uploadsLoaded = false;
+  if (ytPlayer) ytPlayer.pauseVideo();
+  setReady(false);
+  setPlaying(false);
+  elapsed = 0;
+  duration = 0;
+  renderProgress();
+  titleEl.textContent = "Loading uploads…";
+  authorEl.textContent = "";
+  setThumbnail(null);
+
+  let tracks = [];
+  try {
+    const res = await fetch("api/tracks");
+    const data = await res.json();
+    tracks = data.tracks || [];
+  } catch {
+    // fall through with an empty list — reported below
+  }
+  if (token !== setupToken) return;
+
+  uploadedTracks = tracks;
+  uploadsLoaded = true;
+  if (!uploadedTracks.length) {
+    titleEl.textContent = "No uploaded tracks yet";
+    return;
+  }
+  uploadedOrder = shuffleEnabled
+    ? shuffleArray(uploadedTracks.map((_, i) => i))
+    : uploadedTracks.map((_, i) => i);
+  uploadedPos = 0;
+  loadUploadedTrack(token, false);
+}
+
+audioEl.addEventListener("loadedmetadata", () => {
+  if (mode !== "native") return;
+  duration = audioEl.duration || 0;
+  renderProgress();
+});
+audioEl.addEventListener("timeupdate", () => {
+  if (mode !== "native") return;
+  elapsed = audioEl.currentTime;
+  renderProgress();
+});
+audioEl.addEventListener("play", () => {
+  if (mode === "native") setPlaying(true);
+});
+audioEl.addEventListener("pause", () => {
+  if (mode === "native") setPlaying(false);
+});
+audioEl.addEventListener("ended", () => {
+  if (mode === "native") uploadsAdvance(1);
 });
 
 /* ---------- in-page tracklist (no redirect to youtube.com) ---------- */
@@ -485,7 +617,37 @@ async function fetchTitles(playlistId, items) {
   if (tracklistCache[playlistId]) tracklistCache[playlistId].loaded = true;
 }
 
+function renderUploadsTracklist() {
+  tracklistItemsEl.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  uploadedTracks.forEach((track, idx) => {
+    const li = document.createElement("li");
+    li.className = "track-item";
+    li.dataset.videoId = track.key;
+    if (track.key === currentVideoId) li.classList.add("active");
+    li.innerHTML = `<span class="track-item-note">♪</span><span>${track.name}</span>`;
+    li.addEventListener("click", () => {
+      const pos = uploadedOrder.indexOf(idx);
+      uploadedPos = pos === -1 ? 0 : pos;
+      loadUploadedTrack(setupToken, true);
+    });
+    frag.appendChild(li);
+  });
+  tracklistItemsEl.appendChild(frag);
+}
+
 function loadTracklist(playlistId) {
+  if (playlistId === UPLOADS_PLAYLIST_ID) {
+    if (!uploadedTracks.length) {
+      tracklistStatusEl.textContent = uploadsLoaded ? "No uploaded tracks yet" : "Loading…";
+      tracklistItemsEl.innerHTML = "";
+      return;
+    }
+    tracklistStatusEl.textContent = `${uploadedTracks.length} tracks`;
+    renderUploadsTracklist();
+    return;
+  }
+
   const cached = tracklistCache[playlistId];
   if (cached) {
     renderTracklist(cached.items);
