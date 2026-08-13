@@ -1,0 +1,7 @@
+name = "romoj-akhra"
+pages_build_output_dir = "site"
+compatibility_date = "2026-08-01"
+
+[[r2_buckets]]
+binding = "AUDIO_BUCKET"
+bucket_name = "romoj-akhra-audio"

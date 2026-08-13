@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Upload — Romoj Akhra</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Mukta:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <main class="admin">
+    <h1>Upload tracks</h1>
+
+    <section id="gate" class="card">
+      <label for="adminKey">Admin password</label>
+      <input type="password" id="adminKey" autocomplete="current-password" />
+      <button type="button" id="unlockBtn">Unlock</button>
+      <p id="gateError" class="error"></p>
+    </section>
+
+    <section id="uploadSection" class="card" hidden>
+      <label for="fileInput">Select audio files (MP3, WAV, M4A, OGG, FLAC)</label>
+      <input type="file" id="fileInput" accept="audio/*" multiple />
+      <button type="button" id="uploadBtn" disabled>Upload</button>
+      <ul id="uploadLog" class="log"></ul>
+    </section>
+
+    <section id="listSection" class="card" hidden>
+      <h2>Uploaded tracks</h2>
+      <p id="listStatus" class="muted"></p>
+      <ul id="trackList" class="track-list"></ul>
+    </section>
+  </main>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

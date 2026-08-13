@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", "site", "-p", "5500", "-c-1"],
       "port": 5500
+    },
+    {
+      "name": "romoj-akhra-functions",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "pages", "dev", "--port", "8788", "--r2", "AUDIO_BUCKET=romoj-akhra-audio"],
+      "port": 8788
     }
   ]
 }
