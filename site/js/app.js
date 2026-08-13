@@ -191,15 +191,18 @@ shuffleBtn.addEventListener("click", () => {
 let setupToken = 0; // bumped on every tab switch to invalidate in-flight retries from the previous playlist
 
 function setThumbnail(videoId) {
+  // the base `img { display: block }` rule beats the `hidden` attribute's
+  // UA-stylesheet rule (author styles always win), so visibility is set
+  // directly instead — same fix as the play/pause icons needed
   if (!videoId) {
-    thumbEl.hidden = true;
+    thumbEl.style.display = "none";
     thumbFallbackEl.style.display = "";
     return;
   }
-  thumbEl.hidden = false;
+  thumbEl.style.display = "";
   thumbFallbackEl.style.display = "none";
   thumbEl.onerror = () => {
-    thumbEl.hidden = true;
+    thumbEl.style.display = "none";
     thumbFallbackEl.style.display = "";
   };
   thumbEl.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
@@ -398,7 +401,9 @@ seekEl.addEventListener("click", (e) => {
 /* ---------- in-page tracklist (no redirect to youtube.com) ---------- */
 
 const tracklistToggle = document.getElementById("tracklistToggle");
-const tracklistPanel = document.getElementById("tracklistPanel");
+const tracklistModal = document.getElementById("tracklistModal");
+const tracklistBackdrop = document.getElementById("tracklistBackdrop");
+const tracklistClose = document.getElementById("tracklistClose");
 const tracklistStatusEl = document.getElementById("tracklistStatus");
 const tracklistItemsEl = document.getElementById("tracklistItems");
 
@@ -408,8 +413,15 @@ let tracklistOpen = false;
 
 function closeTracklist() {
   tracklistOpen = false;
-  tracklistPanel.hidden = true;
+  tracklistModal.hidden = true;
   tracklistToggle.setAttribute("aria-expanded", "false");
+}
+
+function openTracklist() {
+  tracklistOpen = true;
+  tracklistModal.hidden = false;
+  tracklistToggle.setAttribute("aria-expanded", "true");
+  loadTracklist(currentPlaylistId);
 }
 
 function highlightActiveTrack() {
@@ -497,10 +509,15 @@ function loadTracklist(playlistId) {
 }
 
 tracklistToggle.addEventListener("click", () => {
-  tracklistOpen = !tracklistOpen;
-  tracklistPanel.hidden = !tracklistOpen;
-  tracklistToggle.setAttribute("aria-expanded", String(tracklistOpen));
-  if (tracklistOpen) loadTracklist(currentPlaylistId);
+  if (tracklistOpen) closeTracklist();
+  else openTracklist();
+});
+
+tracklistClose.addEventListener("click", closeTracklist);
+tracklistBackdrop.addEventListener("click", closeTracklist);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && tracklistOpen) closeTracklist();
 });
 
 startPlayer(currentPlaylistId);

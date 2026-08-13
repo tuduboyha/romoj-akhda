@@ -158,46 +158,115 @@ img {
   padding: 0 16px 24px;
 }
 
-.open-playlist {
+.tracklist-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  color: rgba(255, 246, 230, 0.6);
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.tracklist-icon-btn:hover {
+  color: var(--ochre);
+  background: rgba(235, 169, 52, 0.12);
+}
+
+.tracklist-icon-btn .icon {
+  height: 18px;
+  width: 18px;
+}
+
+/* ---------- tracklist popup ---------- */
+
+.tracklist-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* the `hidden` attribute's UA-stylesheet rule loses to this file's own
+   `display: flex` above (author styles always beat the UA stylesheet,
+   regardless of specificity) unless it's re-declared explicitly here */
+.tracklist-modal[hidden] {
+  display: none;
+}
+
+.tracklist-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 6, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.tracklist-modal-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 30rem;
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  border: 1px solid rgba(235, 169, 52, 0.3);
+  background: rgba(30, 22, 17, 0.97);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.tracklist-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 8px 12px 16px;
+  border-bottom: 1px solid rgba(235, 169, 52, 0.2);
+  flex-shrink: 0;
+}
+
+.tracklist-status {
+  margin: 0;
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: rgba(255, 246, 230, 0.5);
-  text-decoration: none;
-  transition: color 0.15s;
 }
 
-.open-playlist:hover {
-  color: var(--ochre);
+.tracklist-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: rgba(255, 246, 230, 0.6);
+  transition: color 0.15s, background-color 0.15s;
 }
 
-.tracklist-panel {
-  width: 100%;
-  max-width: 42rem;
-  max-height: 190px;
-  overflow-y: auto;
-  border-radius: 16px;
-  border: 1px solid rgba(235, 169, 52, 0.25);
-  background: rgba(36, 26, 20, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.tracklist-close:hover {
+  color: var(--rice);
+  background: rgba(235, 169, 52, 0.12);
 }
 
-.tracklist-status {
-  margin: 0;
-  padding: 8px 14px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 246, 230, 0.4);
+.tracklist-close .icon {
+  height: 16px;
+  width: 16px;
 }
 
 .tracklist-items {
   margin: 0;
-  padding: 0;
+  padding: 6px 0;
   list-style: none;
+  overflow-y: auto;
 }
 
 .track-item {
@@ -505,10 +574,6 @@ img {
 
   .install-btn {
     padding: 8px 16px;
-    font-size: 11px;
-  }
-
-  .open-playlist {
     font-size: 11px;
   }
 
