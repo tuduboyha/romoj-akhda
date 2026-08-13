@@ -158,6 +158,12 @@ img {
   padding: 0 16px 24px;
 }
 
+.player-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .tracklist-icon-btn {
   display: flex;
   align-items: center;
@@ -169,14 +175,22 @@ img {
   transition: color 0.15s, background-color 0.15s;
 }
 
-.tracklist-icon-btn:hover {
+.tracklist-icon-btn:hover:not(:disabled) {
   color: var(--ochre);
   background: rgba(235, 169, 52, 0.12);
+}
+
+.tracklist-icon-btn:disabled {
+  opacity: 0.4;
 }
 
 .tracklist-icon-btn .icon {
   height: 18px;
   width: 18px;
+}
+
+#shuffleBtn.tracklist-icon-btn[aria-pressed="true"] {
+  color: var(--ochre);
 }
 
 /* ---------- tracklist popup ---------- */
@@ -493,14 +507,6 @@ img {
 
 .controls button:disabled {
   opacity: 0.4;
-}
-
-#shuffleBtn[aria-pressed="true"] {
-  color: var(--ochre);
-}
-
-#shuffleBtn[aria-pressed="true"]:hover:not(:disabled) {
-  color: var(--ochre);
 }
 
 .icon {
