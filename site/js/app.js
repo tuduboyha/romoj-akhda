@@ -63,6 +63,11 @@ function setActiveTabStyles() {
   document.querySelectorAll(".year-option").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.playlist === currentPlaylistId);
   });
+  // on narrow screens the row scrolls horizontally, so picking a tab off
+  // to the side (e.g. Instrumental) left it clipped at the edge instead
+  // of scrolling into full view
+  const activeTab = tabsRow.querySelector(".tab.active");
+  if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
 }
 
 function selectPlaylist(playlistId) {
