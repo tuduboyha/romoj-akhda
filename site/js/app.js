@@ -399,8 +399,14 @@ function playTrack(videoId, knownTitle) {
 
 playBtn.addEventListener("click", () => {
   if (mode === "native") {
-    if (playing) audioEl.pause();
-    else audioEl.play();
+    if (playing) {
+      audioEl.pause();
+    } else {
+      audioEl.play().catch((err) => {
+        titleEl.textContent = "Couldn't play this track";
+        authorEl.textContent = err?.message || "";
+      });
+    }
     return;
   }
   if (!ytPlayer) return;
@@ -435,11 +441,16 @@ seekEl.addEventListener("click", (e) => {
 
 const audioEl = new Audio();
 audioEl.preload = "metadata";
+audioEl.style.display = "none";
+// some mobile browsers handle gesture-triggered playback more reliably
+// when the element is actually attached to the document
+document.body.appendChild(audioEl);
 
 let uploadedTracks = [];
 let uploadedOrder = [];
 let uploadedPos = 0;
 let uploadsLoaded = false; // distinguishes "still fetching" from "fetched, none found" in the tracklist popup
+let expectedAudioSrc = ""; // lets the error listener ignore a stale failure from a track the user has already skipped past
 
 function shuffleArray(arr) {
   const copy = arr.slice();
@@ -468,8 +479,15 @@ function loadUploadedTrack(token, autoplay) {
   setThumbnail(null);
   highlightActiveTrack();
   audioEl.src = track.url;
+  expectedAudioSrc = audioEl.src; // resolved absolute URL, to match what the error listener reads back
   setReady(true);
-  if (autoplay) audioEl.play().catch(() => {});
+  if (autoplay) {
+    audioEl.play().catch((err) => {
+      if (mode !== "native" || token !== setupToken) return;
+      titleEl.textContent = "Couldn't play this track";
+      authorEl.textContent = err?.message || "";
+    });
+  }
 }
 
 function uploadsAdvance(delta) {
@@ -533,6 +551,19 @@ audioEl.addEventListener("pause", () => {
 });
 audioEl.addEventListener("ended", () => {
   if (mode === "native") uploadsAdvance(1);
+});
+audioEl.addEventListener("error", () => {
+  if (mode !== "native" || !audioEl.src || audioEl.src !== expectedAudioSrc) return;
+  const messages = {
+    1: "Loading was aborted",
+    2: "Network error",
+    3: "This file couldn't be decoded",
+    4: "This file format isn't supported",
+  };
+  const code = audioEl.error?.code;
+  titleEl.textContent = "Couldn't play this track";
+  authorEl.textContent = messages[code] || "Unknown error";
+  setPlaying(false);
 });
 
 /* ---------- in-page tracklist (no redirect to youtube.com) ---------- */
